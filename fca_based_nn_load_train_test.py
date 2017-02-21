@@ -11,11 +11,11 @@ import copy
 import math
 import numpy as np
 import numbers
-from fca.fca_lattice_new import FCA_Lattice
+from fca.fca_lattice import FCA_Lattice
 from fca.fca_model import FCA_Model
 from fca.fca_sort_util import FCA_Sort
-from fnn.fnn_new import FNN
-from fnn.fnn_model_new import FNN_Model
+from fnn.fnn import FNN
+from fnn.fnn_model import FNN_Model
 from fnn.data_gen import Data_Gen
 import re
 import json
