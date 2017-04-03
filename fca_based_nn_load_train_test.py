@@ -24,12 +24,10 @@ import random
 
 prog_start_time = time.time()
 data_set = 'breast_cancer'
+sample_inx = '0'
 shuffled_dir = '/home/nurtas/Documents/UCIMLR/shuffled_samples/'
-train_path = os.path.join(shuffled_dir + data_set, data_set + '_train_0')
-test_path = os.path.join(shuffled_dir + data_set, data_set + '_test_0')
-#file_path = '/home/nurtas/Documents/UCIMLR/mushrooms.txt'
-#file_name = os.path.basename(file_path)
-#file_name_wo_ext = os.path.splitext(file_name)[0]
+train_path = os.path.join(shuffled_dir+data_set, data_set+'_train_'+sample_inx)
+test_path = os.path.join(shuffled_dir+data_set, data_set+'_test_'+sample_inx)
 
 src_train = open(train_path).readlines()
 src_test = open(test_path).readlines()
@@ -37,23 +35,24 @@ src_test = open(test_path).readlines()
 # Из расчета 1000 дополнительных объекта или (глубина+1)
 train_len_to_depth_ratio = 1
 
-depth = 3
+depth = 2
 
 depth = int(max(depth - train_len_to_depth_ratio, 1))
 conf_share=0.8
 
 log_params_file_path = os.path.join(
-    '/home/nurtas/Documents/aspirantura/logs_and_architectures/depth',
-    data_set, 'depth-' + str(depth), 'selection-0', 'params-1.log')
+    '/home/nurtas/Documents/aspirantura/logs_and_architectures/ismis2017',
+    data_set, 'depth-'+str(depth), 'selection-'+sample_inx, 'params-1.log')
 
 if not os.path.exists(os.path.dirname(log_params_file_path)):
     os.makedirs(os.path.dirname(log_params_file_path))
 
 max_counter = 0
 for file_in_dir in os.listdir(os.path.dirname(log_params_file_path)):
-    file_in_dir_wo_ext = os.path.splitext(file_in_dir)[0]
-    if int(file_in_dir_wo_ext.split('-')[-1]) > max_counter:
-        max_counter = int(file_in_dir_wo_ext.split('-')[-1])
+    if file_in_dir.endswith('.log'):
+        file_in_dir_wo_ext = os.path.splitext(file_in_dir)[0]
+        if int(file_in_dir_wo_ext.split('-')[-1]) > max_counter:
+            max_counter = int(file_in_dir_wo_ext.split('-')[-1])
 
 new_log_params_file_name = 'params-' + str(max_counter+1) + '.log'
 log_params_file_path = log_params_file_path.replace('params-1.log',
@@ -108,7 +107,7 @@ elif data_set == 'breast_cancer':
 print('Split to train, validation and test sets started.')
 X_train, y_train, X_valid, y_valid, _, _ =\
     upper_lat.split_dataset(X_cols, y_col,
-                            dataset_parts = [1.0, 0.0, 0.0])
+                            dataset_parts = [0.7, 0.3, 0.0])
 
 
 src_ref_test = []
@@ -118,7 +117,7 @@ for s in src_test:
 
 upper_lat_test = FCA_Lattice(src_ref_test, y_map)
 
-_, _, _, _, X_test, y_test = upper_lat.split_dataset(X_cols, y_col,
+_, _, _, _, X_test, y_test = upper_lat_test.split_dataset(X_cols, y_col,
     dataset_parts = [0.0, 0.0, 1.0])
 
 
@@ -165,7 +164,6 @@ print('Initial FCA train set length: ', train_len)
 log_params_file.write('Initial FCA train set length: %d\n' % train_len)
 
 cut_train_len = min(round(1000 * train_len_to_depth_ratio), train_len)
-#cut_valid_len = round(cut_train_len * 0.2)
 print('Cut FCA train set length: %d' % cut_train_len)
 log_params_file.write('Cut FCA train set length: %d\n' % cut_train_len)
 
@@ -174,7 +172,9 @@ X_train_cut, y_train_cut = copy.deepcopy(X_train_bin), copy.deepcopy(y_train)
 if cut_train_len <= train_len * 0.5:
     X_train_cut = X_train_cut[:cut_train_len]
     y_train_cut = y_cut[:cut_train_len]
-
+    log_params_file.write('Hypothesis generated for cutted selection with size %d',
+                          cut_train_len)    
+    log_params_file.flush()
 
 fca_model = FCA_Model(X_train_cut, y_train_cut, lst_y)
 print('Hypothesis generation started.')
@@ -192,7 +192,7 @@ log_params_file.write('Time for hypothesis generation: %s\n' %
 print('Calculate performance of generated FC on validation set.')
 log_params_file.flush()
 gen_perf_start_time = time.time()
-fca_model.calc_performance(X_train_bin, y_train)#(X_valid_bin, y_valid)
+fca_model.calc_performance(X_valid_bin, y_valid)#(X_train_bin, y_train)
 print('Time for performance calculation for generated FC: %s'
       % hms_string(time.time() - gen_perf_start_time))
 log_params_file.write('Time for performance calculation for generated FC: %s\n'
@@ -203,7 +203,7 @@ print('Sort hypothesis.')
 log_params_file.flush()
 sort_start_time = time.time()
 fca_sorted = FCA_Sort(fca_model.fc_list, X_train_bin, y_train, lst_y)
-log_params_file.write('Sorting based on F-measure')
+log_params_file.write('Sorting based on F-measure.\n')
 #log_params_file.write('Sorting based on confidence-support ratio =%f' %
 #                      conf_share)
 fca_sorted.sort_based_f_measure()#sort_based_conf_supp(conf_share=conf_share)
@@ -237,10 +237,7 @@ def save_fc(taked_fc, file_path):
     with open(file_path, 'w') as file:
         json.dump(taked_fc, file)
 
-#fc_file_name = 'taked_fc_' + file_name
-#fc_path = os.path.join(
-#    '/home/nurtas/Documents/MyPythonScripts/NN_architectures/Mushrooms',
-#    fc_file_name)
+
 fc_path = os.path.join(os.path.dirname(log_params_file_path),
                        'selected-fc_' + str(max_counter+1) + '.json')
 
@@ -286,16 +283,6 @@ def train(fnn_model, params, X_cut, y_cut):
 
 params = Params()
 
-#valid_index_list = [i for i in range(len(X_valid_bin))]
-#random.shuffle(valid_index_list)
-
-#X_valid_nparray, y_valid_nparray =\
-#    np.empty((0, len(X_valid_bin[0])), float), np.empty((0, 1), float)
-
-#for valid_index_shuf in valid_index_list:
-#    X_valid_nparray = np.vstack([X_valid_nparray,
-#                                 np.array(X_valid_bin[valid_index_shuf])])
-#    y_valid_nparray = np.vstack([y_valid_nparray, y_valid[valid_index_shuf]])
 
 X_train_nparray, y_train_nparray = np.array(X_train_bin), np.array(y_train)
 
@@ -319,7 +306,6 @@ def statistics(fnn_model, X_test, y_test, log_params_file, r1=0.0):
         for cl in lst_y:
             y1[cl] = results[cl]['o']
         r = 0
-        #for cl in lst_y:
         for cl in fnn_working_model.NN.neuron_inputs:
             r += cl * y1[cl]
         if y_test[i] == round(r+r1) and y_test[i] != 0: tp += 1
@@ -370,8 +356,7 @@ def statistics(fnn_model, X_test, y_test, log_params_file, r1=0.0):
 X_test_nparray = np.array(X_test_bin)
 log_params_file.flush()
 print('Testing NN started.')
-#log_params_file = open(log_params_file_path, 'a')
-statistics(fnn_model, X_test_nparray, y_test, log_params_file, r1=0.0)
+statistics(fnn_model, X_test_nparray, y_test, log_params_file, r1=0.5)
 
 
 log_params_file.write('Total passed time: %s\n' %

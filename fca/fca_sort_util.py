@@ -187,12 +187,18 @@ class FCA_Sort():
                           'True-Neg' : self.fc_classes[cl][i_fc].tn_num,
                           'False-Pos' : self.fc_classes[cl][i_fc].fp_num,
                           'False-Neg' : self.fc_classes[cl][i_fc].fn_num}})
-                elif ((self.fc_classes[cl][i_fc].tp_num >=
+                elif (# Check if FC's predicted tp number true_false_ratio_thresh
+                      # times more than fp
+                      (self.fc_classes[cl][i_fc].tp_num >=
                        (self.fc_classes[cl][i_fc].fp_num *
                         true_false_ratio_thresh))
+                      # Check if FC cover more than part_of_class_with_obj_thresh
+                      # part of all objects that belong to this class
                       and (self.fc_classes[cl][i_fc].tp_num >=
                            (self.classes_obj_num_dic[cl] *
                                part_of_class_with_obj_thresh))
+                      # Check if selected FC already too much compared to
+                      # number of attributes
                       and (len(self.taked_fc[cl]) <=
                            (attr_num * fc_attr_num_ratio_thresh))):
                     self.taked_fc[cl].append(
