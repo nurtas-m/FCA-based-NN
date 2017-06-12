@@ -1,4 +1,5 @@
-
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
 from __future__ import division
@@ -16,7 +17,7 @@ class FNN_Model():
         self.upper_lat = upper_lat
         self.X_train = X_train
         self.y_train = y_train
-        self.X_test = X_test
+        self.X_test = X_test 
         self.y_test = y_test
         self.lst_y = self.upper_lat.y_classes_num
         #self.lst_y = self.upper_lat.get_y_classes(y_train)

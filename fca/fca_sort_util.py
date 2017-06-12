@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 
 """Utilities for sorting fca."""
 from __future__ import absolute_import
